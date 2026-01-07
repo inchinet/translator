@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Liquid Translator</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="app-container">
+        <h1>TRANSLATE</h1>
+        
+        <!-- Source Language Selection -->
+        <div class="language-selector">
+            <select id="source-select"></select>
+            <button class="swap-btn" id="swap-btn"><i class="fas fa-exchange-alt"></i></button>
+            <select id="dest-select"></select>
+        </div>
+
+        <!-- Source Box -->
+        <div class="translation-box" id="source-box">
+            <div class="box-header">Source</div>
+            <textarea id="source-text" placeholder="Speak or type..."></textarea>
+            <div class="controls">
+                <button class="icon-btn" id="source-volume"><i class="fas fa-volume-up"></i></button>
+                <button class="icon-btn mic-btn" id="source-mic"><i class="fas fa-microphone"></i></button>
+            </div>
+        </div>
+
+        <!-- Destination Box -->
+        <div class="translation-box" id="dest-box">
+            <div class="box-header">Translation</div>
+            <textarea id="dest-text" placeholder="Translation..." readonly></textarea>
+            <div class="controls">
+                <button class="icon-btn" id="dest-volume"><i class="fas fa-volume-up"></i></button>
+                <button class="icon-btn mic-btn" id="dest-mic"><i class="fas fa-microphone"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
