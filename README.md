@@ -3,7 +3,6 @@
 A beautiful, mobile-first bidirectional translator with a "Liquid Glass" (Glassmorphism) aesthetic. Designed for travel, it supports voice input and text-to-speech for seamless conversation.
 
 ![2-way Translator](https://github.com/inchinet/translator/blob/main/translator.png)
-
 ## Features
 
 - **Liquid Glass UI**: Modern, translucent aesthetics with dynamic gradients.
@@ -48,4 +47,5 @@ MIT
 ## Repository
 
 [https://github.com/inchinet/translator](https://github.com/inchinet/translator)
+
 
