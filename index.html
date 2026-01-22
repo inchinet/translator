@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -8,11 +9,12 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
+
 <body>
 
     <div class="app-container">
         <h1>TRANSLATE</h1>
-        
+
         <!-- Source Language Selection -->
         <div class="language-selector">
             <select id="source-select"></select>
@@ -26,6 +28,8 @@
             <textarea id="source-text" placeholder="Speak or type..."></textarea>
             <div class="controls">
                 <button class="icon-btn" id="source-volume"><i class="fas fa-volume-up"></i></button>
+                <button class="icon-btn" id="source-scan"><i class="fas fa-camera"></i></button>
+                <button class="icon-btn" id="source-transmit"><i class="fas fa-play"></i></button>
                 <button class="icon-btn mic-btn" id="source-mic"><i class="fas fa-microphone"></i></button>
             </div>
         </div>
@@ -36,11 +40,31 @@
             <textarea id="dest-text" placeholder="Translation..." readonly></textarea>
             <div class="controls">
                 <button class="icon-btn" id="dest-volume"><i class="fas fa-volume-up"></i></button>
+                <button class="icon-btn" id="dest-transmit"><i class="fas fa-play"></i></button>
                 <button class="icon-btn mic-btn" id="dest-mic"><i class="fas fa-microphone"></i></button>
             </div>
         </div>
     </div>
 
+    <!-- Camera Scanner Modal -->
+    <div id="scanner-container" class="scanner-container" style="display: none;">
+        <video id="scanner-video" autoplay playsinline></video>
+        <canvas id="scanner-canvas" style="display: none;"></canvas>
+        <div class="scanner-ui">
+            <div id="scanner-loading" class="scanner-loading">
+                <p>Starting Camera...</p>
+                <div class="spinner"></div>
+            </div>
+            <div class="scanner-instructions">Align text horizontally for best results</div>
+            <div class="scan-feedback"></div>
+            <button id="capture-btn" class="capture-btn"><i class="fas fa-camera"></i></button>
+            <button id="close-scanner-btn" class="close-scanner-btn">&times;</button>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2/dist/tesseract.min.js"></script>
     <script src="script.js"></script>
 </body>
+
 </html>

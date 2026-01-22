@@ -5,13 +5,13 @@
 // Mandarin: Speech 'zh-CN', Translate 'zh-CN' (Simplified)
 
 const LANGUAGES = {
-    'yue': { name: 'Cantonese (廣東話)', speech: 'zh-HK', translate: 'yue' },
-    'zh': { name: 'Mandarin (國語)', speech: 'zh-CN', translate: 'zh-CN' },
-    'en': { name: 'English', speech: 'en-US', translate: 'en' },
-    'ja': { name: 'Japanese (日本語)', speech: 'ja-JP', translate: 'ja' },
-    'ko': { name: 'Korean (한국어)', speech: 'ko-KR', translate: 'ko' },
-    'fr': { name: 'French (Français)', speech: 'fr-FR', translate: 'fr' },
-    'de': { name: 'German (Deutsch)', speech: 'de-DE', translate: 'de' }
+    'yue': { name: 'Cantonese (廣東話)', speech: 'zh-HK', translate: 'yue', tesseract_lang: 'chi_tra' },
+    'zh': { name: 'Mandarin (國語)', speech: 'zh-CN', translate: 'zh-CN', tesseract_lang: 'chi_sim' },
+    'en': { name: 'English', speech: 'en-US', translate: 'en', tesseract_lang: 'eng' },
+    'ja': { name: 'Japanese (日本語)', speech: 'ja-JP', translate: 'ja', tesseract_lang: 'jpn' },
+    'ko': { name: 'Korean (한국어)', speech: 'ko-KR', translate: 'ko', tesseract_lang: 'kor' },
+    'fr': { name: 'French (Français)', speech: 'fr-FR', translate: 'fr', tesseract_lang: 'fra' },
+    'de': { name: 'German (Deutsch)', speech: 'de-DE', translate: 'de', tesseract_lang: 'deu' }
 };
 
 // State
@@ -31,7 +31,18 @@ const sourceMic = document.getElementById('source-mic');
 const destMic = document.getElementById('dest-mic');
 const sourceVolume = document.getElementById('source-volume');
 const destVolume = document.getElementById('dest-volume');
+const sourceTransmit = document.getElementById('source-transmit');
+const destTransmit = document.getElementById('dest-transmit');
 const swapBtn = document.getElementById('swap-btn');
+
+// Scanner DOM Elements
+const sourceScan = document.getElementById('source-scan');
+const scannerContainer = document.getElementById('scanner-container');
+const scannerVideo = document.getElementById('scanner-video');
+const scannerCanvas = document.getElementById('scanner-canvas');
+const scannerLoading = document.getElementById('scanner-loading');
+const captureBtn = document.getElementById('capture-btn');
+const closeScannerBtn = document.getElementById('close-scanner-btn');
 
 // Initialization
 function init() {
@@ -74,7 +85,123 @@ function setupEventListeners() {
 
     sourceVolume.addEventListener('click', () => speakText(sourceText.value, state.sourceLang));
     destVolume.addEventListener('click', () => speakText(destText.value, state.destLang));
+
+    sourceTransmit.addEventListener('click', () => translate(sourceText.value, state.sourceLang, state.destLang, 'dest'));
+    destTransmit.addEventListener('click', () => translate(destText.value, state.destLang, state.sourceLang, 'source'));
+    
+    sourceScan.addEventListener('click', startScanning);
+    closeScannerBtn.addEventListener('click', stopScanning);
+    captureBtn.addEventListener('click', captureAndRecognize);
 }
+
+// --- OCR / Camera Functions ---
+let currentStream;
+
+function startScanning() {
+    scannerContainer.style.display = 'flex';
+    scannerLoading.style.display = 'block';
+
+    const constraints = {
+        video: {
+            facingMode: 'environment' // Prefer back camera
+        }
+    };
+
+    navigator.mediaDevices.getUserMedia(constraints)
+        .then(stream => {
+            currentStream = stream;
+            scannerVideo.srcObject = stream;
+            scannerVideo.play().then(() => {
+                scannerLoading.style.display = 'none';
+            });
+        })
+        .catch(err => {
+            console.error("Camera access error:", err);
+            scannerLoading.querySelector('p').innerText = 'Could not access camera. Please ensure permissions are granted.';
+            // Fallback for dev environment
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    currentStream = stream;
+                    scannerVideo.srcObject = stream;
+                    scannerVideo.play().then(() => {
+                        scannerLoading.style.display = 'none';
+                    });
+                })
+                .catch(err2 => {
+                     console.error("Secondary camera access error:", err2);
+                     scannerLoading.querySelector('p').innerText = 'Could not access any camera.';
+                });
+        });
+}
+
+function stopScanning() {
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
+    }
+    scannerContainer.style.display = 'none';
+    scannerLoading.style.display = 'block'; // Reset loading message
+    scannerLoading.querySelector('p').innerText = 'Starting Camera...';
+}
+
+async function captureAndRecognize() {
+    if (!currentStream) return;
+    
+    const canvas = scannerCanvas;
+    const video = scannerVideo;
+    const feedback = document.querySelector('.scan-feedback');
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+
+    feedback.textContent = 'Recognizing text...';
+
+    // 1. Determine OCR language
+    let ocrLang = LANGUAGES[state.sourceLang].tesseract_lang;
+    if (['yue', 'zh'].includes(state.sourceLang)) {
+        ocrLang += '+eng';
+    }
+    
+    try {
+        const result = await Tesseract.recognize(
+            canvas.toDataURL('image/png'),
+            ocrLang, 
+            {
+                logger: m => {
+                    if (m.status === 'recognizing text') {
+                        feedback.textContent = `Recognizing: ${Math.round(m.progress * 100)}%`;
+                    }
+                }
+            }
+        );
+        
+        // 2. Place full, cleaned text in textarea
+        const fullText = result.data.text.replace(/^\s*[\r\n]/gm, '').trim(); // Remove empty lines
+        sourceText.value = fullText;
+        
+        // 3. Extract only Chinese characters for translation
+        const chineseTextOnly = fullText.match(/[\u4e00-\u9fa5]+/g)?.join(' ') || '';
+
+        feedback.textContent = 'Done!';
+        
+        // 4. Auto-translate only the Chinese part
+        if (chineseTextOnly.trim()) {
+            translate(chineseTextOnly, state.sourceLang, state.destLang, 'dest');
+        }
+
+    } catch (err) {
+        console.error('OCR Error:', err);
+        feedback.textContent = 'Could not recognize text.';
+    } finally {
+        // Hide scanner after a short delay
+        setTimeout(() => {
+            stopScanning();
+            feedback.textContent = '';
+        }, 1500);
+    }
+}
+
 
 // Speech Recognition Setup
 let recognition;
